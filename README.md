@@ -1,4 +1,4 @@
-# GWT Essentials (Multi-Module)
+# GWT Helper
 
 
 Extensão VS Code para desenvolvimento com GWT (Google Web Toolkit) em projetos multi-módulo Maven.
@@ -21,7 +21,7 @@ Extensão VS Code para desenvolvimento com GWT (Google Web Toolkit) em projetos 
 
 1. Abra o VS Code
 2. Vá para a aba Extensions (Ctrl+Shift+X)
-3. Pesquise por "GWT Essentials (Multi-Module)"
+3. Pesquise por "GWT Helper Extension"
 4. Clique em Install
 
 **Pré-requisitos:**
