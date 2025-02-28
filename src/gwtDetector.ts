@@ -107,6 +107,9 @@ export function parsePomForGwtPlugin(pomPath: string, text: string): GwtProjectI
   if (moduleNameMatch) {
     moduleName = moduleNameMatch[1];
   }
+  if(moduleName === undefined){
+    moduleName = "Root POM";
+  }
   //extrair devModePort do <devmodeArgs>
   let devModePort: number | undefined;
   const devModePortMatch = text.match(/<devmodeArgs>[\s\S]*?<arg>-port<\/arg>\s*<arg>(\d+)<\/arg>/);
@@ -119,6 +122,15 @@ export function parsePomForGwtPlugin(pomPath: string, text: string): GwtProjectI
   const codeServerPortMatch = text.match(/<codeserverArgs>[\s\S]*?<arg>-port<\/arg>\s*<arg>(\d+)<\/arg>/);
   if (codeServerPortMatch) {
     codeServerPort = parseInt(codeServerPortMatch[1], 10);
+  }
+
+  //  codeServerPort inside devModeArgs
+  if (!codeServerPort) {
+    const codeServerPortMatch = text.match(/<devmodeArgs>[\s\S]*?<arg>-codeserverPort<\/arg>\s*<arg>(\d+)<\/arg>/);
+    if (codeServerPortMatch) {
+      codeServerPort = parseInt(codeServerPortMatch[1],
+        10);
+    }
   }
 
   return {

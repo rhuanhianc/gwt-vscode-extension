@@ -18,7 +18,7 @@ function capitalize(str: string): string {
  */
 function createEnv(javaPath?: string): NodeJS.ProcessEnv {
   const env = { ...process.env };
-  if (javaPath) {
+  if (javaPath && javaPath.trim() !== "" && javaPath !== "java") {
     env.JAVA_HOME = javaPath;
   }
   if (process.platform === 'win32' && env.JAVA_HOME) {
