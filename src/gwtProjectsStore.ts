@@ -6,16 +6,19 @@ interface GwtProjectRuntime {
   codeServerProcess?: ChildProcess;
   jettyProcess?: ChildProcess;
   compileProcess?: ChildProcess;
+  codeServerPort?: number;
 }
 
 export class GwtProjectsStore {
   private static instance: GwtProjectsStore;
   private projects: GwtProjectInfo[] = [];
+  private jettyProjects: GwtProjectInfo[] = [];
 
   //  pomPath -> GwtProjectRuntime
   private runtimeMap = new Map<string, GwtProjectRuntime>();
+  private runtimeJettyMap = new Map<string, GwtProjectRuntime>();
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): GwtProjectsStore {
     if (!this.instance) {
@@ -31,6 +34,19 @@ export class GwtProjectsStore {
     for (const p of list) {
       this.runtimeMap.set(p.pomPath, {});
     }
+  }
+
+  public setJettyProjects(list: GwtProjectInfo[]) {
+    this.jettyProjects = list;
+
+    this.runtimeJettyMap.clear();
+    for (const p of list) {
+      this.runtimeJettyMap.set(p.pomPath, {});
+    }
+  }
+
+  public getJettProjects(): GwtProjectInfo[] {
+    return this.jettyProjects;
   }
 
   public getProjects(): GwtProjectInfo[] {
@@ -67,6 +83,12 @@ export class GwtProjectsStore {
     rt.compileProcess = proc;
   }
 
+  public setCodeServerPort(pomPath: string, port: number) {
+    const rt = this.runtimeMap.get(pomPath);
+    if (!rt) return;
+    rt.codeServerPort = port;
+  }
+  
   public getDevModeProcess(pomPath: string): ChildProcess | undefined {
     return this.runtimeMap.get(pomPath)?.devModeProcess;
   }
@@ -81,6 +103,10 @@ export class GwtProjectsStore {
 
   public getCompileProcess(pomPath: string): ChildProcess | undefined {
     return this.runtimeMap.get(pomPath)?.compileProcess;
+  }
+
+  public getCodeServerPort(pomPath: string): number | undefined {
+    return this.runtimeMap.get(pomPath)?.codeServerPort;
   }
 
   // Parar todos
