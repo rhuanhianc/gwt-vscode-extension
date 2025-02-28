@@ -82,10 +82,13 @@ export function parsePomForJettyPlugin(pomPath: string, text: string): GwtProjec
     pluginVersion = versionMatch[1];
   }
 
+  const pomFolder = pomPath.replace(/[/\\]pom.xml$/, "");
+  const moduleName = pomFolder.split(path.sep).pop();
 
   return {
     pomPath,
-    pluginVersion
+    pluginVersion,
+    moduleName
   };
 }
 
