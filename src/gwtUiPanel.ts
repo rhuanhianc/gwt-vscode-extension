@@ -42,6 +42,7 @@ export class GWTUiProvider implements vscode.TreeDataProvider<GWTItem> {
           jettyRunning ? "stop" : "server-process"
         ),
         new GWTItem("Stop All", "gwt.stopAll", "close-all"),
+        new GWTItem("Open Debug", "gwt.openDebug", "debug-alt"),
         new GWTItem("Show Logs", "gwt.showLogs", "output"),
         new GWTItem("Configs", "gwt.openSettings", "gear")
       ];

@@ -2,8 +2,15 @@
     "name": "gwt-helper",
     "displayName": "GWT Helper",
     "description": "GWT Helper for Visual Studio Code",
-    "version": "0.1.0",
-    "publisher": "Rhuan Hianc",
+    "version": "0.2.0",
+    "publisher": "RhuanHianc",
+    "icon": "images/gwt-icon.png",
+    "author": {
+        "name": "Rhuan Hianc",
+        "email": "rhuanhianc@gmail.com"
+    },
+    "license": "MIT",
+    "homepage": "https://github.com/rhuanhianc/gwt-vscode-extension",
     "engines": {
         "vscode": "^1.70.0"
     },
@@ -15,6 +22,22 @@
         "type": "git",
         "url": "https://github.com/rhuanhianc/gwt-vscode-extension"
     },
+    "keywords": [
+        "gwt",
+        "google",
+        "web",
+        "toolkit",
+        "java",
+        "maven",
+        "jetty",
+        "devmode",
+        "codeserver",
+        "extension",
+        "vscode",
+        "visual",
+        "studio",
+        "code"
+    ],
     "activationEvents": [
         "onView:gwtHelperView",
         "onCommand:gwt.refreshProjects",
@@ -27,6 +50,7 @@
         "onCommand:gwt.startJetty",
         "onCommand:gwt.stopJetty",
         "onCommand:gwt.stopAll",
+        "onCommand:gwt.openDebug",
         "onCommand:gwt.showLogs",
         "onCommand:gwt.openSettings",
         "onDebugResolve:gwt"
@@ -92,6 +116,10 @@
                 "title": "GWT: Stop All"
             },
             {
+                "command": "gwt.openDebug",
+                "title": "GWT: Open Debug"
+            },
+            {
                 "command": "gwt.showLogs",
                 "title": "GWT: Show Logs"
             },
@@ -133,6 +161,11 @@
                     "type": "string",
                     "default": "gwt:compile",
                     "description": "Objetivos Maven para compilar o projeto, substitua por clean package para compilar e empacotar."
+                },
+                "gwtHelper.debugUrl": {
+                    "type": "string",
+                    "default": "http://localhost:8080",
+                    "description": "URL para debugar o GWT."
                 }
             }
         },
