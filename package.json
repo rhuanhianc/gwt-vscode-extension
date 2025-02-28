@@ -2,7 +2,7 @@
     "name": "gwt-helper",
     "displayName": "GWT Helper",
     "description": "GWT Helper for Visual Studio Code",
-    "version": "0.2.0",
+    "version": "0.2.2",
     "publisher": "RhuanHianc",
     "icon": "images/gwt-icon.png",
     "author": {
