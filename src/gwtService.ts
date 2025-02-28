@@ -146,6 +146,7 @@ function spawnMavenProcess(
   child.on('close', (code) => {
     logInfo(mode, `${colored} finalizado (código: ${code}).`);
     processSetter(pomPath, undefined);
+    provider?.refresh();
   });
   provider?.refresh();
 }
