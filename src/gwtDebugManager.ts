@@ -72,6 +72,29 @@ function getWorkspaceFolder(project: GwtProjectInfo): string {
 }
 
 /**
+ * Returns the workspace path or, if there is no workspace, the full project path.
+ */
+//todo gambiarra
+function getWebRoot(project: any): string {
+  let webRoot: string;
+ // Get the workspace path by removing pom.xml
+  const pomFolder = project.pomPath.replace(/[/\\]pom.xml$/, "");
+  const workspaceFolder = getWorkspaceFolder(project);
+  // Use the name of the last folder as a workspace variable if the pom.xml is in the workspace
+  const lastFolderPom = pomFolder.split(path.sep).pop();
+  const lastFolderWorkspace = workspaceFolder.split(path.sep).pop();
+  if (lastFolderPom === lastFolderWorkspace) {
+    webRoot = "${workspaceFolder:" + lastFolderWorkspace + "}";
+  } else {
+    // If it is not possible to use the workspaceFolder, use the project path with converted slashes
+    webRoot = pomFolder.replace(/\\/g, "/");
+  }
+
+
+  return webRoot;
+}
+
+/**
  * Opens an integrated debug session (no need for launch.json),
  * dynamically configured based on extension settings and
  * in the selected GWT project data.
@@ -97,7 +120,7 @@ export async function openGWTDebugSession() {
   // set as example "webRoot": "${workspaceFolder:ProjetoFolder}", where ProjetoFolder is the last folder in the workspace path
   const workspaceFolder = getWorkspaceFolder(project);
   const lastFolder = workspaceFolder.split(path.sep).pop();
-  const webRoot = "${workspaceFolder:" + lastFolder + "}";
+  const webRoot = getWebRoot(project);
 
   // Try to get the CodeServer port
   const codeServerPort = await getCodeServerPortForProject(project);
@@ -107,7 +130,11 @@ export async function openGWTDebugSession() {
   }
 
   // Set up sourceMapPathOverrides
-  const clientName = project.moduleName ? project.moduleName.toLowerCase() : 'projeto';
+  let clientName = project.moduleName ? project.moduleName.toLowerCase() : 'projeto';
+  //if clientName have . in the name, get only the second part
+  if (clientName.includes('.')) {
+    clientName = clientName.split('.')[1];
+  }
   const sourceMapPathOverrides: { [key: string]: string } = {};
   sourceMapPathOverrides[`http://127.0.0.1:${codeServerPort}/sourcemaps/${clientName}/*`] = webRoot + '/src/*';
 
