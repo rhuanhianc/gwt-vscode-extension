@@ -1,74 +1,78 @@
 # GWT Helper
 
+**Note:** This is a study project and is currently under development.
 
-Extensão VS Code para desenvolvimento com GWT (Google Web Toolkit) em projetos multi-módulo Maven.
+A VS Code extension for developing with GWT (Google Web Toolkit) in multi-module Maven projects.
 
-## Funcionalidades Principais
+## Key Features
 
-- 🕵️ Varredura automática de projetos GWT através de arquivos `pom.xml`
-- 🎮 Controle completo dos processos GWT:
-  - ▶️/⏹️ Compilação GWT
+- 🕵️ Automatic scanning of GWT projects through `pom.xml` files
+- 🎮 Complete control of GWT processes:
+  - ▶️/⏹️ GWT Compilation
   - ▶️/⏹️ GWT DevMode
   - ▶️/⏹️ GWT CodeServer
-  - ▶️/⏹️ Servidor Jetty
-- 🛠️ Interface gráfica dedicada na Activity Bar
-- 📝 Logs coloridos e dedicados para cada processo
-- ⚙️ Configuração personalizável de paths e comandos
-- 🔍 Suporte a projetos multi-módulo Maven
-- 🚨 Parada simultânea de todos os processos
+  - ▶️/⏹️ Jetty Server
+  - 📊 GWT Debugging
+- 🛠️ Dedicated graphical interface in the Activity Bar
+- 📝 Colored and dedicated logs for each process
+- ⚙️ Customizable paths and commands configuration
+- 🔍 Support for multi-module Maven projects
+- 🚨 Simultaneous termination of all processes
 
-## Instalação
+## Installation
 
-1. Abra o VS Code
-2. Vá para a aba Extensions (Ctrl+Shift+X)
-3. Pesquise por "GWT Helper Extension"
-4. Clique em Install
+1. Open VS Code
+2. Go to the Extensions tab (Ctrl+Shift+X)
+3. Search for "GWT Helper Extension"
+4. Click Install
 
-**Pré-requisitos:**
-- Java JDK (8+ recomendado)
-- Apache Maven configurado no PATH
-- Projeto GWT com configuração Maven
+**Prerequisites:**
+- Java JDK (8+ recommended)
+- Apache Maven configured in PATH
+- GWT project with Maven configuration
 
-## Utilização
+## Usage
 
-### Painel de Controle GWT
-1. Abra o painel GWT na Activity Bar (ícone do GWT)
-2. Use os botões para:
-   - 🔄 Atualizar lista de projetos
-   - ⚡ Iniciar/Parar processos
-   - 📤 Acessar logs
-   - ⚙️ Abrir configurações
+### GWT Control Panel
+1. Open the GWT panel in the Activity Bar (GWT icon)
+2. Use the buttons to:
+   - 🔄 Refresh project list
+   - ⚡ Start/Stop processes
+   - 📤 Access logs
+   - ⚙️ Open settings
 
-### Comandos Disponíveis (Ctrl+Shift+P)
-| Comando                | Descrição                          |
+### Available Commands (Ctrl+Shift+P)
+| Command                | Description                          |
 |------------------------|-----------------------------------|
-| GWT: Refresh Projects  | Redetecta projetos no workspace   |
-| GWT: Run Compile       | Inicia compilação GWT             |
-| GWT: Stop Compile      | Para compilação em execução       |
-| GWT: Run DevMode       | Inicia o GWT DevMode              |
-| GWT: Stop DevMode      | Para o DevMode em execução        |
-| GWT: Run CodeServer    | Inicia o GWT CodeServer           |
-| GWT: Stop CodeServer   | Para o CodeServer em execução     |
-| GWT: Start Jetty       | Inicia servidor Jetty             |
-| GWT: Stop Jetty        | Para servidor Jetty               |
-| GWT: Stop All          | Para todos os processos GWT       |
-| GWT: Show Logs         | Exibe painel de logs              |
-| GWT: Open Settings     | Abre configurações da extensão    |
+| GWT: Refresh Projects  | Re-detect projects in workspace    |
+| GWT: Run Compile       | Start GWT compilation              |
+| GWT: Stop Compile      | Stop running compilation           |
+| GWT: Run DevMode       | Start GWT DevMode                  |
+| GWT: Stop DevMode      | Stop running DevMode               |
+| GWT: Run CodeServer    | Start GWT CodeServer               |
+| GWT: Stop CodeServer   | Stop running CodeServer            |
+| GWT: Start Jetty       | Start Jetty server                 |
+| GWT: Stop Jetty        | Stop Jetty server                  |
+| GWT: Stop All          | Stop all GWT processes             |
+| GWT: Open Debug        | Open debug panel                   |
+| GWT: Show Logs         | Display logs panel                 |
+| GWT: Open Settings     | Open extension settings            |
 
-## Configuração
+## Configuration
 
-Acesse as configurações (`File > Preferences > Settings` ou Ctrl+,) e procure por "GWT":
+Access settings (`File > Preferences > Settings` or Ctrl+,) and search for "GWT":
 
-| Configuração                  | Descrição                                | Padrão           |
-|-------------------------------|----------------------------------------|------------------|
-| `gwtHelper.javaPath`          | Caminho completo do Java               | `java`           |
-| `gwtHelper.mavenCommand`      | Comando Maven customizado              | `mvn`            |
-| `gwtHelper.devModeGoals`      | Goals Maven para DevMode               | `gwt:devmode`    |
-| `gwtHelper.codeServerGoals`   | Goals Maven para CodeServer            | `gwt:codeserver` |
-| `gwtHelper.jettyGoals`        | Goals Maven para Jetty                 | `jetty:run`      |
-| `gwtHelper.compileGoals`      | Goals Maven para compilação            | `gwt:compile`    |
+| Setting                      | Description                           | Default          |
+|------------------------------|---------------------------------------|------------------|
+| `gwtHelper.javaPath`         | Full Java path                        | `java`           |
+| `gwtHelper.mavenCommand`     | Custom Maven command                  | `mvn`            |
+| `gwtHelper.devModeGoals`     | Maven goals for DevMode               | `gwt:devmode`    |
+| `gwtHelper.codeServerGoals`  | Maven goals for CodeServer            | `gwt:codeserver` |
+| `gwtHelper.jettyGoals`       | Maven goals for Jetty                 | `jetty:run`      |
+| `gwtHelper.compileGoals`     | Maven goals for compilation           | `gwt:compile`    |
+| `gwtHelper.debugUrl`         | GWT DevMode debug URL                 | `http://localhost:8080` |
 
-**Exemplo de configuração para Windows:**
+**Example configuration for Windows:**
 ```json
 "gwtHelper.javaPath": "C:/Program Files/Java/jdk1.8.0_301",
 "gwtHelper.mavenCommand": "mvn.cmd"
@@ -76,14 +80,14 @@ Acesse as configurações (`File > Preferences > Settings` ou Ctrl+,) e procure 
 
 ## Troubleshooting
 
-### Problemas Comuns
-1. **Processos não iniciam:**
-   - Verifique o path do Java nas configurações
-   - Confira se o Maven está instalado e no PATH
-   - Consulte os logs (`GWT: Show Logs`)
+### Common Issues
+1. **Processes don't start:**
+   - Check Java path in settings
+   - Verify that Maven is installed and in PATH
+   - Check logs (`GWT: Show Logs`)
 
-2. **Erros de porta:**
-   - Verifique as portas configuradas no `pom.xml`
+2. **Port errors:**
+   - Check the ports configured in `pom.xml`
    ```xml
    <devmodeArgs>
      <arg>-port</arg>
@@ -91,42 +95,41 @@ Acesse as configurações (`File > Preferences > Settings` ou Ctrl+,) e procure 
    </devmodeArgs>
    ```
 
-3. **Projetos não detectados:**
-   - Certifique-se que o `pom.xml` contém o plugin GWT:
+3. **Projects not detected:**
+   - Ensure the `pom.xml` contains the GWT plugin:
    ```xml
    <artifactId>gwt-maven-plugin</artifactId>
    ```
 
-## Desenvolvimento
+## Development
 
-Contribuições são bem-vindas! Siga os passos:
+Contributions are welcome! Follow these steps:
 
-1. Faça fork do repositório
-2. Instale as dependências:
+1. Fork the repository
+2. Install dependencies:
    ```bash
    npm install
    ```
-3. Modifique o código em TypeScript
-4. Compile com:
+3. Modify the TypeScript code
+4. Compile with:
    ```bash
    npm run compile
    ```
-5. Instale o vspkg:
+5. Install vspkg:
    ```bash
    npm install -g vsce
    ```
-6. Empacote a extensão:
+6. Package the extension:
    ```bash
-    vsce package
-    ```
-## Licença
+   vsce package
+   ```
 
-Este projeto está licenciado sob a MIT License.
+## License
+
+This project is licensed under the MIT License.
 
 ---
 
-**Nota:** Esta extensão não é oficialmente associada ao Google ou ao projeto GWT.
+**Note:** This extension is not officially associated with Google or the GWT project.
 
-**Observação:** Este projeto é um exemplo de extensão para GWT e pode ser adaptado conforme as necessidades do desenvolvimento.
-```
-
+**Observation:** This project is an example extension for GWT and can be adapted according to development needs.
