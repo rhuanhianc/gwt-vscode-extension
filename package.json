@@ -2,7 +2,7 @@
     "name": "gwt-helper",
     "displayName": "GWT Helper",
     "description": "GWT Helper for Visual Studio Code",
-    "version": "0.2.2",
+    "version": "0.3.0",
     "publisher": "RhuanHianc",
     "icon": "images/gwt-icon.png",
     "author": {
@@ -166,6 +166,15 @@
                     "type": "string",
                     "default": "http://localhost:8080",
                     "description": "URL para debugar o GWT."
+                },
+                "gwtHelper.debugBrowser": {
+                    "type": "string",
+                    "enum": [
+                        "chrome",
+                        "firefox"
+                    ],
+                    "default": "chrome",
+                    "description": "Navegador usado para debugging"
                 }
             }
         },

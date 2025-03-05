@@ -138,9 +138,10 @@ export async function openGWTDebugSession() {
   const sourceMapPathOverrides: { [key: string]: string } = {};
   sourceMapPathOverrides[`http://127.0.0.1:${codeServerPort}/sourcemaps/${clientName}/*`] = webRoot + '/src/*';
 
-  // Debug configuration for the Chrome adapter
+  // Debug configuration for the adapter
+  const gwtHelperConfig = vscode.workspace.getConfiguration('gwtHelper');
   const debugConfig: vscode.DebugConfiguration = {
-    type: "chrome",
+    type: gwtHelperConfig.get<string>('debugBrowser') || "chrome",
     request: "launch",
     name: "GWT Debug Session",
     url: debugUrl,
