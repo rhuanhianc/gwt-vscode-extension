@@ -199,19 +199,17 @@ async function runProcess(
  */
 async function stopProcess(
   mode: 'compile' | 'devmode' | 'codeserver' | 'jetty',
-  getProcess: (pomPath: string) => ChildProcess | undefined,
+  pomPath: string,
   killMode: 'compile' | 'devmode' | 'codeserver' | 'jetty'
 ) {
   const store = GwtProjectsStore.getInstance();
-  const projects = store.getProjects().filter(p => getProcess(p.pomPath));
-  if (projects.length === 0) {
+  if (pomPath === undefined) {
     const msg = mode === 'compile' ? "Nenhuma compilação" :
       mode === 'devmode' ? "Nenhum DevMode" :
         mode === 'codeserver' ? "Nenhum CodeServer" : "Nenhum Jetty";
     vscode.window.showWarningMessage(`${msg} em execução.`);
     return;
   }
-  const pomPath = await pickProject(projects, `Selecione qual ${capitalize(mode)} parar`);
   if (!pomPath) return;
   killProcessForPom(pomPath, killMode);
   disposeTerminal(killMode);
@@ -241,9 +239,9 @@ export function spawnCompile(pomPath: string) {
   spawnMavenProcess('compile', pomPath, store.setCompileProcess.bind(store));
 }
 
-export async function stopCompile() {
+export async function stopCompile(pomPath: string) {
   const store = GwtProjectsStore.getInstance();
-  await stopProcess('compile', store.getCompileProcess.bind(store), 'compile');
+  await stopProcess('compile',pomPath, 'compile');
 }
 
 export async function runDevMode() {
@@ -251,14 +249,14 @@ export async function runDevMode() {
   await runProcess('devmode', store.getDevModeProcess.bind(store), spawnDevMode, "rodar DevMode");
 }
 
-function spawnDevMode(pomPath: string) {
+export function spawnDevMode(pomPath: string) {
   const store = GwtProjectsStore.getInstance();
   spawnMavenProcess('devmode', pomPath, store.setDevModeProcess.bind(store));
 }
 
-export async function stopDevMode() {
+export async function stopDevMode(pomPath: string) {
   const store = GwtProjectsStore.getInstance();
-  await stopProcess('devmode', store.getDevModeProcess.bind(store), 'devmode');
+  await stopProcess('devmode', pomPath, 'devmode');
 }
 
 export async function runCodeServer() {
@@ -266,14 +264,14 @@ export async function runCodeServer() {
   await runProcess('codeserver', store.getCodeServerProcess.bind(store), spawnCodeServer, "rodar CodeServer");
 }
 
-function spawnCodeServer(pomPath: string) {
+export function spawnCodeServer(pomPath: string) {
   const store = GwtProjectsStore.getInstance();
   spawnMavenProcess('codeserver', pomPath, store.setCodeServerProcess.bind(store), false);
 }
 
-export async function stopCodeServer() {
+export async function stopCodeServer(pomPath: string) {
   const store = GwtProjectsStore.getInstance();
-  await stopProcess('codeserver', store.getCodeServerProcess.bind(store), 'codeserver');
+  await stopProcess('codeserver', pomPath, 'codeserver');
 }
 
 export async function startJetty() {
@@ -297,15 +295,13 @@ export async function spawnJetty(pomPath: string) {
   spawnMavenProcess('jetty', pomPath, store.setJettyProcess.bind(store), false);
 }
 
-export async function stopJetty() {
+export async function stopJetty(pomPath: string) {
   const store = GwtProjectsStore.getInstance();
-  const projects = store.getProjects().filter(p => store.getJettyProcess(p.pomPath));
-  if (projects.length === 0) {
+  const projects = store.getJettyProcess(pomPath);
+  if (projects === undefined) {
     vscode.window.showWarningMessage("Nenhum Jetty em execução.");
     return;
   }
-  const pomPath = await pickProject(projects, "Selecione qual Jetty parar");
-  if (!pomPath) return;
   killProcessForPom(pomPath, 'jetty');
   disposeTerminal('jetty');
   provider?.refresh();
