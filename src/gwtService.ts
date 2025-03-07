@@ -28,23 +28,59 @@ function createEnv(javaPath?: string): NodeJS.ProcessEnv {
 }
 
 /**
+ * Checks if the Java installation is version 8 by actually running java -version
+ * and parsing the output.
+ */
+async function isJava8(env: NodeJS.ProcessEnv): Promise<boolean> {
+  return new Promise((resolve) => {
+    const javaCmd = env.JAVA_HOME ?
+      path.join(env.JAVA_HOME, 'bin', 'java') : 'java';
+
+    const javaCheck = spawn(javaCmd, ['-version'], { env });
+    let versionOutput = '';
+
+    // java -version outputs to stderr
+    javaCheck.stderr.on('data', (data) => {
+      versionOutput += data.toString();
+    });
+
+    javaCheck.on('close', () => {
+      // Look for patterns like "1.8.0", "java version "1.8", etc.
+      const isJava8 = /version "1\.8|^java version "1\.8|^openjdk version "1\.8|^jdk1\.8/.test(versionOutput);
+      resolve(isJava8);
+    });
+
+    javaCheck.on('error', () => {
+      // If we can't run java at all, we can't determine the version
+      // Default to false to be safe
+      resolve(false);
+    });
+  });
+}
+/**
  * Returns the environment configured according to the mode.
  * For 'jetty' mode includes the MAVEN_OPTS configuration.
  */
-function getEnvForMode(mode: 'compile' | 'devmode' | 'codeserver' | 'jetty'): NodeJS.ProcessEnv {
+async function getEnvForMode(mode: 'compile' | 'devmode' | 'codeserver' | 'jetty'): Promise<NodeJS.ProcessEnv> {
   const config = vscode.workspace.getConfiguration('gwtHelper');
   const javaPath = config.get<string>('javaPath')?.trim();
   let env = createEnv(javaPath);
   if (mode === 'jetty') {
-    env.MAVEN_OPTS = (env.MAVEN_OPTS ? env.MAVEN_OPTS + " " : "") +
-      "--add-opens=java.base/java.net=ALL-UNNAMED " +
-      "--add-opens=java.base/java.lang=ALL-UNNAMED " +
-      "--add-opens=java.base/java.util=ALL-UNNAMED " +
-      "--add-opens=java.base/java.io=ALL-UNNAMED " +
-      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED " +
-      "--add-opens=java.naming/javax.naming=ALL-UNNAMED";
-    if (javaPath && javaPath.includes("1.8")) {
-      delete env.MAVEN_OPTS;
+    // Check if we're using Java 8
+    const usingJava8 = await isJava8(env);
+    // Log for debugging
+    logInfo(mode, `[${capitalize(mode)}] Detected Java version: ${usingJava8 ? 'Java 8' : 'Java 9+'}`);
+    if (!usingJava8) {
+      // Only add these flags for Java 9+
+      env.MAVEN_OPTS = (env.MAVEN_OPTS ? env.MAVEN_OPTS + " " : "") +
+        "--add-opens=java.base/java.net=ALL-UNNAMED " +
+        "--add-opens=java.base/java.lang=ALL-UNNAMED " +
+        "--add-opens=java.base/java.util=ALL-UNNAMED " +
+        "--add-opens=java.base/java.io=ALL-UNNAMED " +
+        "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED " +
+        "--add-opens=java.naming/javax.naming=ALL-UNNAMED";
+    } else {
+      logInfo(mode, `[${capitalize(mode)}] Using Java 8, no need for --add-opens flags`);
     }
   }
   return env;
@@ -85,7 +121,6 @@ function getMavenCmd(): string {
   if (custom) return custom;
   return 'mvn';
 }
-
 /**
  * Generic function for spawning Maven processes.
  * - mode: defines the type (compile, devmode, coserver, jetty)
@@ -93,7 +128,7 @@ function getMavenCmd(): string {
  * - processSetter: store function to register/clean up the process
  * - attachStderr: if true, attaches the stderr handle (default true)
  */
-function spawnMavenProcess(
+async function spawnMavenProcess(
   mode: 'compile' | 'devmode' | 'codeserver' | 'jetty',
   pomPath: string,
   processSetter: (pomPath: string, proc: ChildProcess | undefined) => void,
@@ -103,54 +138,278 @@ function spawnMavenProcess(
   const colored = `\x1b[34m[${capitalize(mode)}]\x1b[0m`;
   logInfo(mode, `${colored} Iniciando ${capitalize(mode)} para pom: ${pomPath}`);
 
+  // Buffers para coleta de informações
+  let errorBuffer: string[] = [];
+  let outputBuffer: string[] = [];
+  const MAX_BUFFER_LINES = 50;
+
   const folder = path.dirname(pomPath);
   let mavenCmd = getMavenCmd();
-  // Para o devmode, se houver mavenCommand definido na configuração, utiliza-o como comando
+
+// For devmode, if there is mavenCommand defined in the configuration, use it as command
   if (mode === 'devmode') {
     const config = vscode.workspace.getConfiguration('gwtHelper');
     const mavenCommand = config.get<string>('mavenCommand')?.trim();
     if (mavenCommand) mavenCmd = mavenCommand;
   }
+
   const args = getArgsForMode(mode);
-  const env = getEnvForMode(mode);
+  const env = await getEnvForMode(mode);
 
-  const child = spawn(mavenCmd, args, {
-    cwd: folder,
-    shell: process.platform === 'win32',
-    env
-  });
+  // Log do comando completo para diagnóstico
+  const fullCommand = `${mavenCmd} ${args.join(' ')}`;
+  logInfo(mode, `${colored} Executing command: ${fullCommand}`);
 
-  processSetter(pomPath, child);
-  const store = GwtProjectsStore.getInstance();
-  child.stdout.on('data', (data) => {
-    const codeServerColored = `\x1b[34m[CodeServer]\x1b[0m`;
-    logInfo(mode, `${colored} ${data.toString()}`);
-    // Verifica se o output contém a porta do CodeServer para os modos devmode e compile
-    if (mode === 'devmode' || mode === 'compile') {
-      const output = data.toString();
-      // Procura pela linha que indica que o CodeServer está pronto e extrai a porta
-      const portMatch = output.match(/The code server is ready at http:\/\/127\.0\.0\.1:(\d+)\//);
-      if (portMatch) {
-        const port = parseInt(portMatch[1], 10);
-        logInfo('codeserver', `${codeServerColored} Porta detectada: ${port}`);
-        store.setCodeServerPort(pomPath, port);
-      }
+  // Log das variáveis de ambiente relevantes
+  logInfo(mode, `${colored} Environment: JAVA_HOME=${env.JAVA_HOME || 'not defined'}`);
+  if (env.MAVEN_OPTS) {
+    logInfo(mode, `${colored} MAVEN_OPTS=${env.MAVEN_OPTS}`);
+  }
+
+  try {
+    // Pre-check de configurações importantes
+    await checkJavaConfiguration(mode, env);
+
+    const child = spawn(mavenCmd, args, {
+      cwd: folder,
+      shell: process.platform === 'win32',
+      env
+    });
+
+    if (!child || !child.pid) {
+      logError(mode, `${colored} Failed to start Maven process. Check if Maven is installed and in PATH.`);
+      return;
     }
 
-  });
-  if (attachStderr) {
-    child.stderr.on('data', (data) => {
-      logError(mode, `${colored} ${data.toString()}`);
+    processSetter(pomPath, child);
+    const store = GwtProjectsStore.getInstance();
+
+    child.stdout.on('data', (data) => {
+      const output = data.toString();
+      const lines = output.split('\n');
+
+// Store output lines for diagnostics
+      outputBuffer = [...outputBuffer, ...lines.filter((line: string) => line.trim() !== '')].slice(-MAX_BUFFER_LINES);
+
+      const codeServerColored = `\x1b[34m[CodeServer]\x1b[0m`;
+      logInfo(mode, `${colored} ${output}`);
+
+      // Check if the output contains the CodeServer port for devmode and compile modes
+      if (mode === 'devmode' || mode === 'compile') {
+        // Procura pela linha que indica que o CodeServer está pronto e extrai a porta
+        const portMatch = output.match(/The code server is ready at http:\/\/127\.0\.0\.1:(\d+)\//);
+        if (portMatch) {
+          const port = parseInt(portMatch[1], 10);
+          logInfo('codeserver', `${codeServerColored} Porta detectada: ${port}`);
+          store.setCodeServerPort(pomPath, port);
+        }
+      }
+
+      // Catch errors that may appear on stdout
+      if (output.includes('ERROR') || output.includes('[ERROR]') ||
+        output.includes('Exception') || output.includes('Failure')) {
+        const errorLines = lines.filter((line: string | string[]) =>
+          line.includes('ERROR') || line.includes('[ERROR]') ||
+          line.includes('Exception') || line.includes('Failure') ||
+          line.includes('Caused by:') || line.includes('Failed to')
+        );
+        errorBuffer = [...errorBuffer, ...errorLines].slice(-MAX_BUFFER_LINES);
+      }
     });
-  }
-  child.on('close', (code) => {
-    logInfo(mode, `${colored} finalizado (código: ${code}).`);
+
+    if (attachStderr) {
+      child.stderr.on('data', (data) => {
+        const errorOutput = data.toString();
+        errorBuffer = [...errorBuffer, ...errorOutput.split('\n').filter((line: string) => line.trim() !== '')].slice(-MAX_BUFFER_LINES);
+        logError(mode, `${colored} ${errorOutput}`);
+      });
+    }
+
+    child.on('error', (error) => {
+      logError(mode, `${colored} Error starting process: ${error.message}`);
+      errorBuffer.push(`Error starting process:: ${error.message}`);
+
+      // Additional diagnostics
+      if (error.message.includes('ENOENT')) {
+        logError(mode, `${colored} The command '${mavenCmd}' not found. Make sure Maven is installed and in the PATH.`);
+        checkMavenInstallation(mode);
+      }
+
+      processSetter(pomPath, undefined);
+      provider?.refresh();
+    });
+
+    child.on('close', (code) => {
+      if (code !== 0) {
+        logError(mode, `${colored} Process ended with error (code: ${code}).`);
+
+        // If we have collected errors, display them
+        if (errorBuffer.length > 0) {
+          logError(mode, `${colored} Error details:`);
+          errorBuffer.forEach(line => logError(mode, `${colored} ${line}`));
+        } else {
+
+          // If we have no specific errors in the buffer, show the last lines of output
+          logError(mode, `${colored} Last lines of output before error:`);
+          outputBuffer.forEach(line => logError(mode, `${colored} ${line}`));
+        }
+
+        // Suggest possible solutions
+        suggestSolutions(mode, errorBuffer.concat(outputBuffer), pomPath, env);
+      } else {
+        logInfo(mode, `${colored} Process completed successfully.`);
+      }
+
+      logInfo(mode, `${colored} finished (code: ${code}).`);
+      processSetter(pomPath, undefined);
+      provider?.refresh();
+    });
+
+    provider?.refresh();
+
+  } catch (error) {
+    logError(mode, `${colored} Exception when starting process: ${error instanceof Error ? error.message : String(error)}`);
+    if (error instanceof Error && error.stack) {
+      logError(mode, `${colored} Stack: ${error.stack}`);
+    }
     processSetter(pomPath, undefined);
     provider?.refresh();
-  });
-  provider?.refresh();
+  }
 }
 
+
+/**
+* Checks if the Java configuration is correct
+*/
+async function checkJavaConfiguration(mode: string, env: NodeJS.ProcessEnv): Promise<void> {
+  const colored = `\x1b[34m[${capitalize(mode)}]\x1b[0m`;
+  
+  return new Promise((resolve) => {
+    try {
+      // Command to check Java version
+      const javaCmd = env.JAVA_HOME ? 
+        path.join(env.JAVA_HOME, 'bin', 'java') : 'java';
+      
+      const javaCheck = spawn(javaCmd, ['-version'], { env });
+      let versionOutput = '';
+      
+      javaCheck.stderr.on('data', (data) => {
+        // java -version outputs to stderr
+        versionOutput += data.toString();
+        logInfo(mode, `${colored} Java version: ${data.toString().trim()}`);
+      });
+      
+      javaCheck.on('close', () => {
+        // Extract the actual version number for more precise logging
+        const versionMatch = versionOutput.match(/"([\d\.]+_\d+|[\d\.]+)"/);
+        if (versionMatch) {
+          const version = versionMatch[1];
+          logInfo(mode, `${colored} Java version detected: ${version}`);
+          
+          // Provide additional information about Java version compatibility
+          if (version.startsWith('1.8')) {
+            logInfo(mode, `${colored} Java 8 detected - supported in all modes`);
+          } else if (parseFloat(version) >= 9) {
+            logInfo(mode, `${colored} Java ${parseFloat(version)}+ detected - --add-opens flags will be required for Jetty`);
+          }
+        }
+        
+        resolve();
+      });
+      
+      javaCheck.on('error', (error) => {
+        logError(mode, `${colored} Error checking Java: ${error.message}`);
+        logError(mode, `${colored} WARNING: Problem with Java configuration. Make sure Java is installed and configured correctly.`);
+        
+        if (env.JAVA_HOME) {
+          logError(mode, `${colored} JAVA_HOME set to: ${env.JAVA_HOME}`);
+          logError(mode, `${colored} Verify that this path exists and contains a valid Java installation.`);
+        } else {
+          logError(mode, `${colored} JAVA_HOME is not set. Consider setting it in the extension settings.`);
+        }
+        
+        resolve();
+      });
+    } catch (error) {
+      logError(mode, `${colored} Failed to verify Java configuration: ${error instanceof Error ? error.message : String(error)}`);
+      resolve();
+    }
+  });
+}
+
+/**
+ * Verifica se o Maven está instalado corretamente
+ */
+function checkMavenInstallation(mode: string) {
+  const colored = `\x1b[34m[${capitalize(mode)}]\x1b[0m`;
+
+  try {
+    // Verificar caminho do Maven
+    const mvnCheck = spawn('where', ['mvn'], {
+      shell: process.platform === 'win32'
+    });
+
+    mvnCheck.stdout.on('data', (data) => {
+      logInfo(mode, `${colored} Maven's Path: ${data.toString().trim()}`);
+    });
+
+    mvnCheck.on('error', () => {
+      logError(mode, `${colored} Could not locate Maven in PATH.`);
+    });
+  } catch (error) {
+    // Ignore errors
+  }
+}
+
+/**
+* Suggests solutions based on the errors found
+*/
+function suggestSolutions(mode: string, outputLines: string[], pomPath: string, env: NodeJS.ProcessEnv) {
+  const colored = `\x1b[34m[${capitalize(mode)}]\x1b[0m`;
+  const allOutput = outputLines.join('\n');
+
+// Java Problems
+  if (allOutput.includes('no java executable found') ||
+    allOutput.includes('No such file or directory') && env.JAVA_HOME) {
+    logError(mode, `${colored} Problem detected: Invalid Java configuration.`);
+    logError(mode, `${colored} Solution: Check the JAVA_HOME path (${env.JAVA_HOME}) is valid.`);
+    logError(mode, `${colored} Make sure this directory exists and contains the 'bin' folder with the 'java' executable.`);
+  }
+  // Port issues
+  else if (allOutput.includes('Address already in use') ||
+    allOutput.includes('Port is already in use') ||
+    allOutput.includes('BindException')) {
+    logError(mode, `${colored} Problem detected: Port is already in use.`);
+    logError(mode, `${colored} Solution: Check if there is no other process using the same port.`);
+    logError(mode, `${colored} Use 'netstat -ano' (Windows) or 'lsof -i' (Linux/Mac) to identify the process.`);
+  }
+  // Memory issues
+  else if (allOutput.includes('OutOfMemoryError') || allOutput.includes('PermGen space')) {
+    logError(mode, `${colored} Problem detected: Out of memory.`);
+    logError(mode, `${colored} Solution: Increase Maven memory settings with MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=256m".`);
+  }
+  // Connection problems
+  else if (allOutput.includes('Connection refused') || allOutput.includes('Conexão recusada')) {
+    logError(mode, `${colored} Problem detected: Connection refused.`);
+    logError(mode, `${colored} Solution: Check if all required services are running.`);
+  }
+  // Dependency issues
+  else if (allOutput.includes('Failed to resolve artifact') || allOutput.includes('Could not resolve dependencies')) {
+    logError(mode, `${colored} Problem detected: Failed to resolve dependencies.`);
+    logError(mode, `${colored} Solution: Check your internet connection and Maven repository configuration.`);
+    logError(mode, `${colored} Try running 'mvn clean install -U' to force update dependencies.`);
+  }
+  // Compilation issues
+  else if (allOutput.includes('Compilation failure')) {
+    logError(mode, `${colored} Problem detected: Compilation error.`);
+    logError(mode, `${colored} Solution: Check the compilation errors in the above logs.`);
+  }
+  // Other problems
+  else {
+    logError(mode, `${colored} For additional debugging, try running the command manually:`);
+    logError(mode as 'compile' | 'devmode' | 'codeserver' | 'jetty', `${colored} cd "${path.dirname(pomPath)}" && ${getMavenCmd()} ${getArgsForMode(mode as 'compile' | 'devmode' | 'codeserver' | 'jetty').join(' ')}`);
+  }
+}
 /**
  * Auxiliary function to choose a project via QuickPick.
  */
@@ -181,13 +440,13 @@ async function runProcess(
   const store = GwtProjectsStore.getInstance();
   const projects = store.getProjects();
   if (projects.length === 0) {
-    vscode.window.showWarningMessage("Nenhum projeto GWT encontrado. Rode 'GWT: Refresh Projects'.");
+    vscode.window.showWarningMessage("No GWT projects found. Run 'GWT: Refresh Projects'.");
     return;
   }
-  const pomPath = await pickProject(projects, `Selecione o projeto para ${actionText}`);
+  const pomPath = await pickProject(projects, `Select the project to ${actionText}`);
   if (!pomPath) return;
   if (getProcess(pomPath)) {
-    vscode.window.showWarningMessage(`${capitalize(mode)} já está rodando para esse projeto.`);
+    vscode.window.showWarningMessage(`${capitalize(mode)} is already running for this project.`);
     return;
   }
   spawnFunc(pomPath);
@@ -225,7 +484,7 @@ export async function refreshProjects() {
   const store = GwtProjectsStore.getInstance();
   store.setProjects(list);
   store.setJettyProjects(listJetty);
-  vscode.window.showInformationMessage(`Detectados ${list.length} projetos GWT.`);
+  vscode.window.showInformationMessage(`Detected ${list.length} GWT projects.`);
   provider?.refresh();
 }
 
@@ -241,7 +500,7 @@ export function spawnCompile(pomPath: string) {
 
 export async function stopCompile(pomPath: string) {
   const store = GwtProjectsStore.getInstance();
-  await stopProcess('compile',pomPath, 'compile');
+  await stopProcess('compile', pomPath, 'compile');
 }
 
 export async function runDevMode() {
@@ -278,13 +537,13 @@ export async function startJetty() {
   const store = GwtProjectsStore.getInstance();
   const projects = store.getJettProjects();
   if (projects.length === 0) {
-    vscode.window.showWarningMessage("Nenhum projeto Jetty encontrado. Rode 'GWT: Refresh Projects'.");
+    vscode.window.showWarningMessage("No Jetty projects found. Run 'GWT: Refresh Projects'.");
     return;
   }
-  const pomPath = await pickProject(projects, "Selecione o projeto para rodar Jetty");
+  const pomPath = await pickProject(projects, "Select the project to run Jetty");
   if (!pomPath) return;
   if (store.getJettyProcess(pomPath)) {
-    vscode.window.showWarningMessage("Jetty já está rodando para esse projeto.");
+    vscode.window.showWarningMessage("Jetty is already running for this project.");
     return;
   }
   spawnJetty(pomPath);
@@ -311,7 +570,7 @@ export function stopAll() {
   const store = GwtProjectsStore.getInstance();
   const all = store.getAllProcesses();
   if (all.length === 0) {
-    vscode.window.showInformationMessage("Nenhum processo DevMode/CodeServer/Jetty em execução.");
+    vscode.window.showInformationMessage("No DevMode/CodeServer/Jetty processes running.");
     return;
   }
   for (const proc of all) {
@@ -324,7 +583,7 @@ export function stopAll() {
   // Clean up the processes in the store
   store.setProjects(store.getProjects());
   store.setJettyProjects(store.getJettProjects());
-  vscode.window.showInformationMessage(`Parado(s) ${all.length} processo(s).`);
+  vscode.window.showInformationMessage(`Stopped ${all.length} process(es).`);
   disposeAllTerminals();
   provider?.refresh();
 }
@@ -361,6 +620,6 @@ function killProcessForPom(pomPath: string, mode: 'devmode' | 'codeserver' | 'je
   } else if (mode === 'compile') {
     store.setCompileProcess(pomPath, undefined);
   }
-  vscode.window.showInformationMessage(`${mode} parado para ${pomPath}`);
+  vscode.window.showInformationMessage(`${mode} stopped for ${pomPath}`);
   provider?.refresh();
 }

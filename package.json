@@ -2,7 +2,7 @@
     "name": "gwt-helper",
     "displayName": "GWT Helper",
     "description": "GWT Helper for Visual Studio Code",
-    "version": "0.3.0",
+    "version": "0.3.2",
     "publisher": "RhuanHianc",
     "icon": "images/gwt-icon.png",
     "author": {
@@ -135,37 +135,37 @@
                 "gwtHelper.javaPath": {
                     "type": "string",
                     "default": "java",
-                    "description": "Caminho para o Java. Ex.: C:/Program Files/Java/jdk-1.8 ou /usr/bin/java"
+                    "description": "Path to Java. Ex: C:/Program Files/Java/jdk-1.8 or /usr/bin/java"
                 },
                 "gwtHelper.mavenCommand": {
                     "type": "string",
                     "default": "",
-                    "description": "Caminho/exec para o Maven. Se vazio, usa 'mvn'"
+                    "description": "Path/exec to Maven. If empty, use 'mvn'"
                 },
                 "gwtHelper.devModeGoals": {
                     "type": "string",
                     "default": "gwt:devmode",
-                    "description": "Objetivos Maven para rodar o DevMode."
+                    "description": "Maven Targets for Running DevMode"
                 },
                 "gwtHelper.codeServerGoals": {
                     "type": "string",
                     "default": "gwt:codeserver",
-                    "description": "Objetivos Maven para rodar o CodeServer, como exemplo gwt:codeserver -pl *-client -am"
+                    "description": "Maven targets for running CodeServer, as an example gwt:codeserver -pl *-client -am"
                 },
                 "gwtHelper.jettyGoals": {
                     "type": "string",
                     "default": "jetty:run",
-                    "description": "Objetivos Maven para rodar o Jetty como exemplo jetty:run -Pdev ou jetty:run -pl *-server -am -Denv=dev"
+                    "description": "Maven targets for running Jetty as example jetty:run -Pdev or jetty:run -pl *-server -am -Denv=dev"
                 },
                 "gwtHelper.compileGoals": {
                     "type": "string",
                     "default": "gwt:compile",
-                    "description": "Objetivos Maven para compilar o projeto, substitua por clean package para compilar e empacotar."
+                    "description": "Maven goals to compile the project, replace with clean package to compile and package."
                 },
                 "gwtHelper.debugUrl": {
                     "type": "string",
                     "default": "http://localhost:8080",
-                    "description": "URL para debugar o GWT."
+                    "description": "URL to debug GWT."
                 },
                 "gwtHelper.debugBrowser": {
                     "type": "string",
@@ -174,7 +174,7 @@
                         "firefox"
                     ],
                     "default": "chrome",
-                    "description": "Navegador usado para debugging"
+                    "description": "Browser used for debugging"
                 }
             }
         },
