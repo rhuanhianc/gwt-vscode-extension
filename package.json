@@ -2,7 +2,7 @@
     "name": "gwt-helper",
     "displayName": "GWT Helper",
     "description": "GWT Helper for Visual Studio Code",
-    "version": "0.3.2",
+    "version": "0.3.3",
     "publisher": "RhuanHianc",
     "icon": "images/gwt-icon.png",
     "author": {
@@ -198,5 +198,13 @@
     },
     "dependencies": {
         "gwt-helper": "file:"
+    },
+    "changelog": {
+        "0.3.3": "Updated README.md and improvements to java error logging and detection",
+        "0.3.2": "Added support for automatic port detection and enhanced UI with status indicators",
+        "0.3.1": "Fixed process management on Windows and improved project detection",
+        "0.3.0": "Added Jetty integration and enhanced debugger configuration",
+        "0.2.0": "Correction of the debugger (workaround) to deal with projects inside and outside of Worskpace",
+        "0.1.0": "Initial release of GWT Helper Extension"
     }
 }
