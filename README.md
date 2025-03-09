@@ -5,7 +5,7 @@
 
 Streamline your GWT (Google Web Toolkit) development workflow with direct access to essential tools right from VS Code.
 
-![GWT Helper Banner](https://via.placeholder.com/800x200?text=GWT+Helper+Banner)
+![GWT Helper Banner]([https://via.placeholder.com/800x200?text=GWT+Helper+Banner](https://rhuanhianc.gallerycdn.vsassets.io/extensions/rhuanhianc/gwt-helper/0.3.3/1741480995692/Microsoft.VisualStudio.Services.Icons.Default))
 
 ## ✨ Features
 
