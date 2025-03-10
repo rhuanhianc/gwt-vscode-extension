@@ -44,6 +44,7 @@ Streamline your GWT (Google Web Toolkit) development workflow with direct access
 The extension adds a GWT icon to your activity bar that opens a sidebar with these features:
 
 #### Global Actions
+
 - 🔄 **Refresh Projects** - Scan workspace for GWT and Jetty projects
 - ⏹️ **Stop All** - Terminate all running processes
 - 🐞 **Open Debug** - Start a debugging session
@@ -52,11 +53,13 @@ The extension adds a GWT icon to your activity bar that opens a sidebar with the
 #### Project-Specific Actions
 
 For **GWT Projects**:
+
 - ▶️/⏹️ **DevMode** - Start or stop GWT DevMode
 - ▶️/⏹️ **CodeServer** - Manage Super Dev Mode
 - ▶️/⏹️ **Compile** - Compile your GWT application
 
 For **Jetty Projects**:
+
 - ▶️/⏹️ **Jetty** - Control the Jetty web server
 
 ### Command Palette Integration
@@ -106,6 +109,7 @@ Integrated debugging support makes development easier:
 ### Project Detection Logic
 
 The extension identifies:
+
 - **GWT Projects**: Projects with `gwt-maven-plugin` in pom.xml
 - **Jetty Projects**: Projects with Jetty plugins in pom.xml
 
@@ -120,31 +124,38 @@ The extension identifies:
 ### Debug Logs
 
 If you encounter problems:
+
 1. Click "Show Logs" in the sidebar
 2. Review the output for errors and suggestions
 
 ## 📝 Release Notes
 
 ### 0.3.3
+
 - Updated documentation
 - Improved Java error detection and logging
 
 ### 0.3.2
+
 - Added automatic port detection
 - Enhanced UI with status indicators
 
 ### 0.3.1
+
 - Fixed process management on Windows
 - Improved project detection
 
 ### 0.3.0
+
 - Added Jetty integration
 - Enhanced debugger configuration
 
 ### 0.2.0
+
 - Fixed debugger to handle projects inside and outside workspace
 
 ### 0.1.0
+
 - Initial release
 
 ## 👥 Contributing
@@ -162,3 +173,15 @@ Created by [Rhuan Hianc](https://github.com/rhuanhianc)
 ---
 
 **Note:** This project is under active development. Feedback and contributions are appreciated!
+
+## Telemetry Temporary
+
+This extension collects anonymous usage data to help improve the product. We only collect:
+
+- Extension installs
+- Extension activations
+- Feature usage (e.g., compiling a project, running DevMode, etc.)
+
+We do not collect any query content, database settings, or personal information.
+
+You can disable telemetry in the extension settings or in VS Code.

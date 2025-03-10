@@ -2,7 +2,7 @@
     "name": "gwt-helper",
     "displayName": "GWT Helper",
     "description": "GWT Helper for Visual Studio Code",
-    "version": "0.3.3",
+    "version": "0.3.5",
     "publisher": "RhuanHianc",
     "icon": "images/gwt-icon.png",
     "author": {
@@ -175,6 +175,11 @@
                     ],
                     "default": "chrome",
                     "description": "Browser used for debugging"
+                },
+                "gwtHelper.telemetry.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enables sending of anonymous telemetry data to help improve the extension"
                 }
             }
         },
@@ -189,14 +194,24 @@
         ]
     },
     "scripts": {
-        "compile": "tsc -p ."
+        "vscode:prepublish": "npm run package",
+        "webpack": "webpack --mode development",
+        "webpack-dev": "webpack --mode development --watch",
+        "package": "webpack --mode production",
+        "compile": "tsc -p .",
+        "lint": "eslint src --ext ts",
+        "watch": "tsc -watch -p ."
     },
     "devDependencies": {
         "@types/node": "^14.0.0",
         "@types/vscode": "^1.70.0",
-        "typescript": "^4.0.0"
+        "ts-loader": "^9.5.2",
+        "typescript": "^4.0.0",
+        "webpack": "^5.98.0",
+        "webpack-cli": "^6.0.1"
     },
     "dependencies": {
+        "@vscode/extension-telemetry": "^0.9.8",
         "gwt-helper": "file:"
     },
     "changelog": {
