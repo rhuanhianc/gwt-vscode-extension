@@ -109,11 +109,7 @@ export class ProjectNode extends GwtTreeItem {
   }
 }
 
-/**
-* Each of the classes below represents a "subitem" of the project.
-* The idea is to show "Run DevMode" or "Stop DevMode" dynamically,
-* depending on the state of the process in the ProjectsStore.
-*/
+
 export class DevModeItem extends GwtTreeItem {
   constructor(public project: GwtProjectInfo) {
     super("", vscode.TreeItemCollapsibleState.None);
@@ -122,18 +118,30 @@ export class DevModeItem extends GwtTreeItem {
 
   private updateLabelAndCommand() {
     const store = GwtProjectsStore.getInstance();
+    // Check both current process and saved state
     const isRunning = !!store.getDevModeProcess(this.project.pomPath);
+    const wasRunning = store.wasDevModeActive(this.project.pomPath);
 
-    this.label = isRunning ? "Stop DevMode" : "Run DevMode";
-    this.iconPath = new vscode.ThemeIcon(isRunning ? "stop" : "play");
+    this.label = isRunning ? "Stop DevMode" : wasRunning ? "DevMode (Disconnected)" : "Run DevMode";
+    this.iconPath = new vscode.ThemeIcon(isRunning ? "stop" : wasRunning ? "warning" : "play");
 
-    this.command = {
-      command: isRunning ? "gwt.stopDevModeForProject" : "gwt.runDevModeForProject",
-      title: this.label,
-      arguments: [this.project]
-    };
+    // If it was running but now disconnected, show a different command
+    if (!isRunning && wasRunning) {
+      this.command = {
+        command: "gwt.resetDevModeState",
+        title: "Reset DevMode state",
+        arguments: [this.project]
+      };
+    } else {
+      this.command = {
+        command: isRunning ? "gwt.stopDevModeForProject" : "gwt.runDevModeForProject",
+        title: this.label,
+        arguments: [this.project]
+      };
+    }
   }
 }
+
 
 export class CodeServerItem extends GwtTreeItem {
   constructor(public project: GwtProjectInfo) {
@@ -144,15 +152,33 @@ export class CodeServerItem extends GwtTreeItem {
   private updateLabelAndCommand() {
     const store = GwtProjectsStore.getInstance();
     const isRunning = !!store.getCodeServerProcess(this.project.pomPath);
+    const wasRunning = store.wasCodeServerActive(this.project.pomPath);
+    const port = store.getCodeServerPort(this.project.pomPath);
 
-    this.label = isRunning ? "Stop CodeServer" : "Run CodeServer";
-    this.iconPath = new vscode.ThemeIcon(isRunning ? "stop" : "run");
+    // If we have a port but no process, it might still be running externally
+    const potentiallyRunning = !isRunning && wasRunning && port !== undefined;
 
-    this.command = {
-      command: isRunning ? "gwt.stopCodeServerForProject" : "gwt.runCodeServerForProject",
-      title: this.label,
-      arguments: [this.project]
-    };
+    this.label = isRunning ? "Stop CodeServer" : 
+                potentiallyRunning ? `CodeServer (Port ${port})` : 
+                "Run CodeServer";
+    
+    this.iconPath = new vscode.ThemeIcon(isRunning ? "stop" : 
+                                         potentiallyRunning ? "warning" : 
+                                         "run");
+
+    if (potentiallyRunning) {
+      this.command = {
+        command: "gwt.resetCodeServerState",
+        title: "Reset CodeServer state",
+        arguments: [this.project]
+      };
+    } else {
+      this.command = {
+        command: isRunning ? "gwt.stopCodeServerForProject" : "gwt.runCodeServerForProject",
+        title: this.label,
+        arguments: [this.project]
+      };
+    }
   }
 }
 
@@ -165,15 +191,29 @@ export class CompileItem extends GwtTreeItem {
   private updateLabelAndCommand() {
     const store = GwtProjectsStore.getInstance();
     const isRunning = !!store.getCompileProcess(this.project.pomPath);
+    const wasRunning = store.wasCompileActive(this.project.pomPath);
 
-    this.label = isRunning ? "Stop Compile" : "Run Compile";
-    this.iconPath = new vscode.ThemeIcon(isRunning ? "stop" : "run");
+    this.label = isRunning ? "Stop Compile" : 
+                wasRunning ? "Compile (Disconnected)" : 
+                "Run Compile";
+    
+    this.iconPath = new vscode.ThemeIcon(isRunning ? "stop" : 
+                                         wasRunning ? "warning" : 
+                                         "run");
 
-    this.command = {
-      command: isRunning ? "gwt.stopCompileForProject" : "gwt.runCompileForProject",
-      title: this.label,
-      arguments: [this.project]
-    };
+    if (!isRunning && wasRunning) {
+      this.command = {
+        command: "gwt.resetCompileState",
+        title: "Reset Compile state",
+        arguments: [this.project]
+      };
+    } else {
+      this.command = {
+        command: isRunning ? "gwt.stopCompileForProject" : "gwt.runCompileForProject",
+        title: this.label,
+        arguments: [this.project]
+      };
+    }
   }
 }
 
@@ -186,15 +226,29 @@ export class JettyItem extends GwtTreeItem {
   private updateLabelAndCommand() {
     const store = GwtProjectsStore.getInstance();
     const isRunning = !!store.getJettyProcess(this.project.pomPath);
+    const wasRunning = store.wasJettyActive(this.project.pomPath);
 
-    this.label = isRunning ? "Stop Jetty" : "Start Jetty";
-    this.iconPath = new vscode.ThemeIcon(isRunning ? "stop" : "server-process");
+    this.label = isRunning ? "Stop Jetty" : 
+                wasRunning ? "Jetty (Disconnected)" : 
+                "Start Jetty";
+    
+    this.iconPath = new vscode.ThemeIcon(isRunning ? "stop" : 
+                                         wasRunning ? "warning" : 
+                                         "server-process");
 
-    this.command = {
-      command: isRunning ? "gwt.stopJettyForProject" : "gwt.startJettyForProject",
-      title: this.label,
-      arguments: [this.project]
-    };
+    if (!isRunning && wasRunning) {
+      this.command = {
+        command: "gwt.resetJettyState",
+        title: "Reset Jetty state",
+        arguments: [this.project]
+      };
+    } else {
+      this.command = {
+        command: isRunning ? "gwt.stopJettyForProject" : "gwt.startJettyForProject",
+        title: this.label,
+        arguments: [this.project]
+      };
+    }
   }
 }
 export const gwtUiProviderInstance = new GWTUiProvider();

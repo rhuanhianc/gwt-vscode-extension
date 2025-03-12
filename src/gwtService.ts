@@ -3,8 +3,10 @@ import { spawn, ChildProcess } from 'child_process';
 import { GwtProjectsStore } from './gwtProjectsStore';
 import { logInfo, logError, showLogs, disposeAllTerminals, disposeTerminal } from './logChannel';
 import * as path from 'path';
-import { spawnTaskKill } from './utils';
+import { checkPortInUse, killProcessByPort, spawnTaskKill } from './utils';
 import { gwtUiProviderInstance as provider } from './gwtUiPanel';
+import { GwtProjectInfo } from './types';
+import find from 'find-process';
 
 /**
  * Returns a string with the first letter capitalized.
@@ -482,9 +484,21 @@ export async function refreshProjects() {
   const list = await detector.detectGwtProjectsInWorkspace();
   const listJetty = await detector.detectJettyProjectsInWorkspace();
   const store = GwtProjectsStore.getInstance();
+  const activeProcessesCountBefore = store.getAllProcesses().length;
+  
+  // Update the projects in the store
   store.setProjects(list);
   store.setJettyProjects(listJetty);
-  vscode.window.showInformationMessage(`Detected ${list.length} GWT projects.`);
+  const activeProcessesCountAfter = store.getAllProcesses().length;
+  
+  vscode.window.showInformationMessage(
+    `Detected ${list.length} GWT projects and ${listJetty.length} Jetty projects. ` +
+    `Active processes: ${activeProcessesCountAfter}.`
+  );
+
+  if (activeProcessesCountBefore > 0 && activeProcessesCountAfter > 0) {
+    logInfo('refresh', `Preserved ${activeProcessesCountAfter}/${activeProcessesCountBefore} active processes during refresh.`);
+  }
   provider?.refresh();
 }
 
@@ -588,9 +602,7 @@ export function stopAll() {
   provider?.refresh();
 }
 
-/**
- * Kills the process according to pomPath and past mode.
- */
+
 function killProcessForPom(pomPath: string, mode: 'devmode' | 'codeserver' | 'jetty' | 'compile') {
   const store = GwtProjectsStore.getInstance();
   const proc = (mode === 'devmode')
@@ -622,4 +634,203 @@ function killProcessForPom(pomPath: string, mode: 'devmode' | 'codeserver' | 'je
   }
   vscode.window.showInformationMessage(`${mode} stopped for ${pomPath}`);
   provider?.refresh();
+}
+
+export function resetDevModeState(project: GwtProjectInfo) {
+  const store = GwtProjectsStore.getInstance();
+  
+  vscode.window.showWarningMessage(
+    `DevMode for ${project.moduleName || path.basename(project.pomPath)} was running but is no longer connected.`,
+    'Clear State', 
+    'Restart'
+  ).then(selection => {
+    if (selection === 'Clear State') {
+      store.setDevModeProcess(project.pomPath, undefined);
+      provider?.refresh();
+    } else if (selection === 'Restart') {
+      spawnDevMode(project.pomPath);
+    }
+  });
+}
+
+
+export function resetCodeServerState(project: GwtProjectInfo) {
+  const store = GwtProjectsStore.getInstance();
+  const port = store.getCodeServerPort(project.pomPath);
+  
+  vscode.window.showWarningMessage(
+    `CodeServer for ${project.moduleName || path.basename(project.pomPath)} might still be running on port ${port}.`,
+    'Clear State', 
+    'Check Port', 
+    'Restart'
+  ).then(async selection => {
+    if (selection === 'Clear State') {
+      store.setCodeServerProcess(project.pomPath, undefined);
+      provider?.refresh();
+    } else if (selection === 'Check Port') {
+      try {
+        // Try to find processes on this port
+        const findProcess = require('find-process');
+        const processes = await findProcess('port', port);
+        
+        if (processes.length > 0) {
+          const proc = processes[0];
+          vscode.window.showInformationMessage(
+            `Port ${port} is being used by ${proc.name} (PID: ${proc.pid})`,
+            'Kill Process', 
+            'Ignore'
+          ).then(choice => {
+            if (choice === 'Kill Process') {
+              if (process.platform === 'win32') {
+                spawnTaskKill(proc.pid);
+              } else {
+                process.kill(proc.pid, 'SIGTERM');
+              }
+              store.setCodeServerProcess(project.pomPath, undefined);
+              provider?.refresh();
+            }
+          });
+        } else {
+          vscode.window.showInformationMessage(`No process found using port ${port}`);
+          store.setCodeServerProcess(project.pomPath, undefined);
+          provider?.refresh();
+        }
+      } catch (error) {
+        logError('codeserver', `Error checking port: ${error}`);
+        vscode.window.showErrorMessage(`Error checking port: ${error}`);
+      }
+    } else if (selection === 'Restart') {
+      spawnCodeServer(project.pomPath);
+    }
+  });
+}
+
+
+export function resetCompileState(project: GwtProjectInfo) {
+  const store = GwtProjectsStore.getInstance();
+  
+  vscode.window.showWarningMessage(
+    `Compile for ${project.moduleName || path.basename(project.pomPath)} was running but is no longer connected.`,
+    'Clear State', 
+    'Restart'
+  ).then(selection => {
+    if (selection === 'Clear State') {
+      store.setCompileProcess(project.pomPath, undefined);
+      provider?.refresh();
+    } else if (selection === 'Restart') {
+      spawnCompile(project.pomPath);
+    }
+  });
+}
+
+export function resetJettyState(project: GwtProjectInfo) {
+  const store = GwtProjectsStore.getInstance();
+  
+  vscode.window.showWarningMessage(
+    `Jetty for ${project.moduleName || path.basename(project.pomPath)} was running but is no longer connected.`,
+    'Clear State', 
+    'Restart'
+  ).then(selection => {
+    if (selection === 'Clear State') {
+      store.setJettyProcess(project.pomPath, undefined);
+      provider?.refresh();
+    } else if (selection === 'Restart') {
+      spawnJetty(project.pomPath);
+    }
+  });
+}
+
+
+/**
+ * Checks if processes that were running before reload are still running
+ * and updates the store accordingly
+ */
+export async function recoverProcesses() {
+  const store = GwtProjectsStore.getInstance();
+  const projects = store.getProjects();
+  const jettyProjects = store.getJettProjects();
+  const allProjects = [...projects, ...jettyProjects];
+  
+  // Only attempt recovery if we have projects
+  if (allProjects.length === 0) {
+    return;
+  }
+
+  vscode.window.withProgress({
+    location: vscode.ProgressLocation.Notification,
+    title: "GWT Helper: Checking process states...",
+    cancellable: false
+  }, async (progress) => {
+    try {
+      for (const project of allProjects) {
+        const { pomPath } = project;
+        
+        // Check process states
+        if (store.wasDevModeActive(pomPath)) {
+          logInfo('recover', `Checking DevMode process status for ${pomPath}...`);
+          store.setDevModeProcess(pomPath, undefined);
+        }
+        
+        if (store.wasCodeServerActive(pomPath)) {
+          logInfo('recover', `Checking CodeServer process status for ${pomPath}...`);
+          // We can try to check if the CodeServer port is still in use
+          const port = store.getCodeServerPort(pomPath);
+          if (port) {
+            try {
+              // Check if the port is in use
+              const isPortInUse = await checkPortInUse(port);
+              if (isPortInUse) {
+                logInfo('recover', `Found CodeServer on port ${port} still running`);
+
+                store.setCodeServerPort(pomPath, port);
+                
+                // Show info to user about port still being used
+                vscode.window.showInformationMessage(
+                  `CodeServer for ${project.moduleName || path.basename(pomPath)} appears to be running on port ${port}`,
+                  'Show Logs',
+                  'Stop Server'
+                ).then(selection => {
+                  if (selection === 'Show Logs') {
+                    showLogs('codeserver');
+                  } else if (selection === 'Stop Server') {
+                    // Try to kill the process by port
+                    killProcessByPort(port);
+                    store.setCodeServerProcess(pomPath, undefined);
+                    provider?.refresh();
+                  }
+                });
+              } else {
+                // No process found on that port
+                store.setCodeServerProcess(pomPath, undefined);
+              }
+            } catch (error) {
+              logError('recover', `Error checking CodeServer port: ${error}`);
+              store.setCodeServerProcess(pomPath, undefined);
+            }
+          } else {
+            store.setCodeServerProcess(pomPath, undefined);
+          }
+        }
+        
+        if (store.wasJettyActive(pomPath)) {
+          logInfo('recover', `Checking Jetty process status for ${pomPath}...`);
+          // Similar to CodeServer, we can't recover the actual ChildProcess
+          store.setJettyProcess(pomPath, undefined);
+        }
+        
+        if (store.wasCompileActive(pomPath)) {
+          logInfo('recover', `Checking Compile process status for ${pomPath}...`);
+          store.setCompileProcess(pomPath, undefined);
+        }
+        
+        // Make sure the flags are reset to match current state
+        store.resetProcessActiveFlags(pomPath);
+      }
+    } catch (error) {
+      logError('recover', `Error during process recovery: ${error}`);
+    }
+    
+    // Refresh the UI after recovery
+    provider?.refresh();
+  });
 }
