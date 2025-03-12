@@ -212,6 +212,7 @@
     },
     "dependencies": {
         "@vscode/extension-telemetry": "^0.9.8",
+        "find-process": "^1.4.10",
         "gwt-helper": "file:"
     },
     "changelog": {
