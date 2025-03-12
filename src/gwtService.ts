@@ -7,6 +7,7 @@ import { checkPortInUse, killProcessByPort, spawnTaskKill } from './utils';
 import { gwtUiProviderInstance as provider } from './gwtUiPanel';
 import { GwtProjectInfo } from './types';
 import find from 'find-process';
+import { formatTime, ProcessStatsHelper } from './processStatsHelper';
 
 /**
  * Returns a string with the first letter capitalized.
@@ -145,10 +146,14 @@ async function spawnMavenProcess(
   let outputBuffer: string[] = [];
   const MAX_BUFFER_LINES = 50;
 
+  const startTime = new Date();
+  
+  const projectName = path.basename(path.dirname(pomPath));
+  
   const folder = path.dirname(pomPath);
   let mavenCmd = getMavenCmd();
 
-// For devmode, if there is mavenCommand defined in the configuration, use it as command
+  // For devmode, if there is mavenCommand defined in the configuration, use it as command
   if (mode === 'devmode') {
     const config = vscode.workspace.getConfiguration('gwtHelper');
     const mavenCommand = config.get<string>('mavenCommand')?.trim();
@@ -183,6 +188,12 @@ async function spawnMavenProcess(
       return;
     }
 
+    // Rastrear estatísticas do processo
+    const context = GwtProjectsStore.extensionContext;
+    if (context) {
+      ProcessStatsHelper.getInstance(context).trackProcess(child, mode, pomPath);
+    }
+
     processSetter(pomPath, child);
     const store = GwtProjectsStore.getInstance();
 
@@ -190,7 +201,7 @@ async function spawnMavenProcess(
       const output = data.toString();
       const lines = output.split('\n');
 
-// Store output lines for diagnostics
+      // Store output lines for diagnostics
       outputBuffer = [...outputBuffer, ...lines.filter((line: string) => line.trim() !== '')].slice(-MAX_BUFFER_LINES);
 
       const codeServerColored = `\x1b[34m[CodeServer]\x1b[0m`;
@@ -204,6 +215,42 @@ async function spawnMavenProcess(
           const port = parseInt(portMatch[1], 10);
           logInfo('codeserver', `${codeServerColored} Porta detectada: ${port}`);
           store.setCodeServerPort(pomPath, port);
+          
+          // Notificação quando o SuperDevMode está pronto
+          if (mode === 'devmode') {
+            vscode.window.showInformationMessage(
+              `Super DevMode pronto para ${projectName} na porta ${port}`,
+              'Abrir Browser'
+            ).then(selection => {
+              if (selection === 'Abrir Browser') {
+                vscode.env.openExternal(vscode.Uri.parse(`http://localhost:8080/`));
+              }
+            });
+          }
+        }
+      }
+
+     
+      if (mode === 'compile') {
+        const progressMatch = output.match(/Compiling (\d+)\/(\d+)/);
+        if (progressMatch) {
+          const current = parseInt(progressMatch[1], 10);
+          const total = parseInt(progressMatch[2], 10);
+          const percentage = Math.floor((current / total) * 100);
+          
+          // Mostrar progresso de compilação
+          vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: `Compilando módulos GWT (${projectName})`,
+            cancellable: false
+          }, async (progress) => {
+            progress.report({ 
+              increment: percentage, 
+              message: `${current}/${total} (${percentage}%)`
+            });
+            // Evita que fechem muito rápido
+            await new Promise(resolve => setTimeout(resolve, 200));
+          });
         }
       }
 
@@ -242,6 +289,10 @@ async function spawnMavenProcess(
     });
 
     child.on('close', (code) => {
+      // Calcular duração
+      const endTime = new Date();
+      const duration = endTime.getTime() - startTime.getTime();
+      
       if (code !== 0) {
         logError(mode, `${colored} Process ended with error (code: ${code}).`);
 
@@ -250,7 +301,6 @@ async function spawnMavenProcess(
           logError(mode, `${colored} Error details:`);
           errorBuffer.forEach(line => logError(mode, `${colored} ${line}`));
         } else {
-
           // If we have no specific errors in the buffer, show the last lines of output
           logError(mode, `${colored} Last lines of output before error:`);
           outputBuffer.forEach(line => logError(mode, `${colored} ${line}`));
@@ -258,8 +308,30 @@ async function spawnMavenProcess(
 
         // Suggest possible solutions
         suggestSolutions(mode, errorBuffer.concat(outputBuffer), pomPath, env);
+        
+        if (mode === 'compile') {
+          vscode.window.showErrorMessage(
+            `Compilação GWT falhou para ${projectName} após ${formatTime(duration)}`,
+            'Ver Logs'
+          ).then(selection => {
+            if (selection === 'Ver Logs') {
+              showLogs(mode);
+            }
+          });
+        }
       } else {
         logInfo(mode, `${colored} Process completed successfully.`);
+        
+        // Notificação de sucesso
+        if (mode === 'compile') {
+          vscode.window.showInformationMessage(
+            `Compilação GWT concluída para ${projectName} em ${formatTime(duration)}`
+          );
+        } else if (mode === 'jetty') {
+          vscode.window.showInformationMessage(
+            `Jetty iniciado com sucesso para ${projectName}`
+          );
+        }
       }
 
       logInfo(mode, `${colored} finished (code: ${code}).`);

@@ -36,18 +36,23 @@ export class GwtProjectsStore {
   private static instance: GwtProjectsStore;
   private projects: GwtProjectInfo[] = [];
   private jettyProjects: GwtProjectInfo[] = [];
+  // pomPath -> GwtProjectRuntime
   private runtimeMap = new Map<string, GwtProjectRuntime>();
   private runtimeJettyMap = new Map<string, GwtProjectRuntime>();
   
-  private static context: vscode.ExtensionContext;
+  // Reference to extension context for storage
+  public static extensionContext: vscode.ExtensionContext;
 
   private constructor() {
+    // Load saved projects and process states when store is created
     this.loadFromStorage();
   }
 
-
+  /**
+   * Set the extension context for storage
+   */
   public static setContext(context: vscode.ExtensionContext) {
-    GwtProjectsStore.context = context;
+    GwtProjectsStore.extensionContext = context;
   }
 
   public static getInstance(): GwtProjectsStore {
@@ -57,16 +62,18 @@ export class GwtProjectsStore {
     return this.instance;
   }
 
- 
+  /**
+   * Load projects and process states from persistent storage
+   */
   private loadFromStorage() {
-    if (!GwtProjectsStore.context) {
+    if (!GwtProjectsStore.extensionContext) {
       console.warn('GwtProjectsStore: No context available for loading data');
       return;
     }
 
     try {
       // Load GWT projects
-      const savedProjects = GwtProjectsStore.context.workspaceState.get<GwtProjectInfo[]>(PROJECTS_STORAGE_KEY);
+      const savedProjects = GwtProjectsStore.extensionContext.workspaceState.get<GwtProjectInfo[]>(PROJECTS_STORAGE_KEY);
       if (savedProjects && savedProjects.length > 0) {
         this.projects = savedProjects;
         
@@ -77,7 +84,7 @@ export class GwtProjectsStore {
       }
 
       // Load Jetty projects
-      const savedJettyProjects = GwtProjectsStore.context.workspaceState.get<GwtProjectInfo[]>(JETTY_PROJECTS_STORAGE_KEY);
+      const savedJettyProjects = GwtProjectsStore.extensionContext.workspaceState.get<GwtProjectInfo[]>(JETTY_PROJECTS_STORAGE_KEY);
       if (savedJettyProjects && savedJettyProjects.length > 0) {
         this.jettyProjects = savedJettyProjects;
         
@@ -88,7 +95,7 @@ export class GwtProjectsStore {
       }
 
       // Load process metadata (which processes were running)
-      const savedProcesses = GwtProjectsStore.context.workspaceState.get<ProcessMetadata>('gwtHelper.processStates');
+      const savedProcesses = GwtProjectsStore.extensionContext.workspaceState.get<ProcessMetadata>('gwtHelper.processStates');
       if (savedProcesses) {
         // Set the runtime metadata flags - we'll need to check if processes are still running
         for (const [pomPath, metadata] of Object.entries(savedProcesses)) {
@@ -111,16 +118,22 @@ export class GwtProjectsStore {
    * Save projects and process states to persistent storage
    */
   private saveToStorage() {
-    if (!GwtProjectsStore.context) {
+    if (!GwtProjectsStore.extensionContext) {
       console.warn('GwtProjectsStore: No context available for saving data');
       return;
     }
 
     try {
-      GwtProjectsStore.context.workspaceState.update(PROJECTS_STORAGE_KEY, this.projects);
-      GwtProjectsStore.context.workspaceState.update(JETTY_PROJECTS_STORAGE_KEY, this.jettyProjects);
+      // Save GWT projects
+      GwtProjectsStore.extensionContext.workspaceState.update(PROJECTS_STORAGE_KEY, this.projects);
+      
+      // Save Jetty projects
+      GwtProjectsStore.extensionContext.workspaceState.update(JETTY_PROJECTS_STORAGE_KEY, this.jettyProjects);
 
+      // Save process state metadata
       const processMetadata: ProcessMetadata = {};
+      
+      // Collect metadata from both runtime maps
       const allRuntimeEntries = [...this.runtimeMap.entries(), ...this.runtimeJettyMap.entries()];
       
       for (const [pomPath, runtime] of allRuntimeEntries) {
@@ -133,7 +146,7 @@ export class GwtProjectsStore {
         };
       }
       
-      GwtProjectsStore.context.workspaceState.update('gwtHelper.processStates', processMetadata);
+      GwtProjectsStore.extensionContext.workspaceState.update('gwtHelper.processStates', processMetadata);
     } catch (error) {
       console.error('Error saving GWT projects to storage', error);
     }
@@ -301,7 +314,9 @@ export class GwtProjectsStore {
     return !!this.runtimeMap.get(pomPath)?.compileProcessActive;
   }
 
-
+  /**
+   * Reset process active flags when checking status
+   */
   public resetProcessActiveFlags(pomPath: string) {
     const rt = this.runtimeMap.get(pomPath);
     if (rt) {
