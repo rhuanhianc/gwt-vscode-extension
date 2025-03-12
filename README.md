@@ -5,7 +5,7 @@
 
 Streamline your GWT (Google Web Toolkit) development workflow with direct access to essential tools right from VS Code.
 
-<img src="https://github.com/rhuanhianc/gwt-vscode-extension/blob/main/images/gwt-icon.png" alt="GWT Helper Banner" width="120" height="auto" />
+<img src="https://github.com/rhuanhianc/gwt-vscode-extension/blob/main/images/gwt-icon.png?raw=true" alt="GWT Helper Banner" width="120" height="auto" />
 
 ## ✨ Features
 
