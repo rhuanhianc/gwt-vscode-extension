@@ -1,6 +1,6 @@
 # GWT Helper for VS Code
 
-[![Version](https://img.shields.io/badge/version-0.3.2-blue.svg)](https://marketplace.visualstudio.com/items?itemName=RhuanHianc.gwt-helper)
+[![Version](https://img.shields.io/badge/version-0.3.6-blue.svg)](https://marketplace.visualstudio.com/items?itemName=RhuanHianc.gwt-helper)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Streamline your GWT (Google Web Toolkit) development workflow with direct access to essential tools right from VS Code.
@@ -129,6 +129,11 @@ If you encounter problems:
 2. Review the output for errors and suggestions
 
 ## 📝 Release Notes
+
+### 0.3.6
+
+- Added process history and management
+- Enhanced UI with statistics and process tracking
 
 ### 0.3.3
 
