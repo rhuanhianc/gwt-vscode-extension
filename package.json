@@ -1,227 +1,244 @@
 {
-    "name": "gwt-helper",
-    "displayName": "GWT Helper",
-    "description": "GWT Helper for Visual Studio Code",
-    "version": "0.3.6",
-    "publisher": "RhuanHianc",
-    "icon": "images/gwt-icon.png",
-    "author": {
-        "name": "Rhuan Hianc",
-        "email": "rhuanhianc@gmail.com"
+  "name": "gwt-helper",
+  "displayName": "GWT Helper",
+  "description": "GWT Helper for Visual Studio Code",
+  "version": "0.3.6",
+  "publisher": "RhuanHianc",
+  "icon": "images/gwt-icon.png",
+  "author": {
+    "name": "Rhuan Hianc",
+    "email": "rhuanhianc@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/rhuanhianc/gwt-vscode-extension",
+  "engines": {
+    "vscode": "^1.70.0"
+  },
+  "categories": [
+    "Other",
+    "Debuggers"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rhuanhianc/gwt-vscode-extension"
+  },
+  "keywords": [
+    "gwt",
+    "google",
+    "web",
+    "toolkit",
+    "java",
+    "maven",
+    "jetty",
+    "devmode",
+    "codeserver",
+    "extension",
+    "vscode",
+    "visual",
+    "studio",
+    "code"
+  ],
+  "activationEvents": [
+    "onView:gwtHelperView",
+    "onCommand:gwt.refreshProjects",
+    "onCommand:gwt.runCompile",
+    "onCommand:gwt.stopCompile",
+    "onCommand:gwt.runDevMode",
+    "onCommand:gwt.stopDevMode",
+    "onCommand:gwt.runCodeServer",
+    "onCommand:gwt.stopCodeServer",
+    "onCommand:gwt.startJetty",
+    "onCommand:gwt.stopJetty",
+    "onCommand:gwt.stopAll",
+    "onCommand:gwt.openDebug",
+    "onCommand:gwt.showLogs",
+    "onCommand:gwt.openSettings",
+    "onDebugResolve:gwt"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "gwt-helper-container",
+          "title": "GWT",
+          "icon": "images/gwt-icon.png"
+        }
+      ]
     },
-    "license": "MIT",
-    "homepage": "https://github.com/rhuanhianc/gwt-vscode-extension",
-    "engines": {
-        "vscode": "^1.70.0"
+    "views": {
+      "gwt-helper-container": [
+        {
+          "id": "gwtHelperView",
+          "name": "GWT Helper",
+          "icon": "images/gwt-icon.png"
+        }
+      ]
     },
-    "categories": [
-        "Other",
-        "Debuggers"
-    ],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/rhuanhianc/gwt-vscode-extension"
-    },
-    "keywords": [
-        "gwt",
-        "google",
-        "web",
-        "toolkit",
-        "java",
-        "maven",
-        "jetty",
-        "devmode",
-        "codeserver",
-        "extension",
-        "vscode",
-        "visual",
-        "studio",
-        "code"
-    ],
-    "activationEvents": [
-        "onView:gwtHelperView",
-        "onCommand:gwt.refreshProjects",
-        "onCommand:gwt.runCompile",
-        "onCommand:gwt.stopCompile",
-        "onCommand:gwt.runDevMode",
-        "onCommand:gwt.stopDevMode",
-        "onCommand:gwt.runCodeServer",
-        "onCommand:gwt.stopCodeServer",
-        "onCommand:gwt.startJetty",
-        "onCommand:gwt.stopJetty",
-        "onCommand:gwt.stopAll",
-        "onCommand:gwt.openDebug",
-        "onCommand:gwt.showLogs",
-        "onCommand:gwt.openSettings",
-        "onDebugResolve:gwt"
-    ],
-    "main": "./out/extension.js",
-    "contributes": {
-        "viewsContainers": {
-            "activitybar": [
-                {
-                    "id": "gwt-helper-container",
-                    "title": "GWT",
-                    "icon": "images/gwt-icon.png"
-                }
-            ]
-        },
-        "views": {
-            "gwt-helper-container": [
-                {
-                    "id": "gwtHelperView",
-                    "name": "GWT Helper"
-                }
-            ]
-        },
-        "commands": [
-            {
-                "command": "gwt.refreshProjects",
-                "title": "GWT: Refresh Projects"
-            },
-            {
-                "command": "gwt.runCompile",
-                "title": "GWT: Run Compile"
-            },
-            {
-                "command": "gwt.stopCompile",
-                "title": "GWT: Stop Compile"
-            },
-            {
-                "command": "gwt.runDevMode",
-                "title": "GWT: Init DevMode"
-            },
-            {
-                "command": "gwt.stopDevMode",
-                "title": "GWT: Init DevMode"
-            },
-            {
-                "command": "gwt.runCodeServer",
-                "title": "GWT: Init CodeServer"
-            },
-            {
-                "command": "gwt.stopCodeServer",
-                "title": "GWT: Stop CodeServer"
-            },
-            {
-                "command": "gwt.startJetty",
-                "title": "GWT: Init Jetty"
-            },
-            {
-                "command": "gwt.stopJetty",
-                "title": "GWT: Stop Jetty"
-            },
-            {
-                "command": "gwt.stopAll",
-                "title": "GWT: Stop All"
-            },
-            {
-                "command": "gwt.openDebug",
-                "title": "GWT: Open Debug"
-            },
-            {
-                "command": "gwt.showLogs",
-                "title": "GWT: Show Logs"
-            },
-            {
-                "command": "gwt.openSettings",
-                "title": "GWT: Abrir Configurações"
-            }
-        ],
-        "configuration": {
-            "type": "object",
-            "title": "GWT Helper Settings",
-            "properties": {
-                "gwtHelper.javaPath": {
-                    "type": "string",
-                    "default": "java",
-                    "description": "Path to Java. Ex: C:/Program Files/Java/jdk-1.8 or /usr/bin/java"
-                },
-                "gwtHelper.mavenCommand": {
-                    "type": "string",
-                    "default": "",
-                    "description": "Path/exec to Maven. If empty, use 'mvn'"
-                },
-                "gwtHelper.devModeGoals": {
-                    "type": "string",
-                    "default": "gwt:devmode",
-                    "description": "Maven Targets for Running DevMode"
-                },
-                "gwtHelper.codeServerGoals": {
-                    "type": "string",
-                    "default": "gwt:codeserver",
-                    "description": "Maven targets for running CodeServer, as an example gwt:codeserver -pl *-client -am"
-                },
-                "gwtHelper.jettyGoals": {
-                    "type": "string",
-                    "default": "jetty:run",
-                    "description": "Maven targets for running Jetty as example jetty:run -Pdev or jetty:run -pl *-server -am -Denv=dev"
-                },
-                "gwtHelper.compileGoals": {
-                    "type": "string",
-                    "default": "gwt:compile",
-                    "description": "Maven goals to compile the project, replace with clean package to compile and package."
-                },
-                "gwtHelper.debugUrl": {
-                    "type": "string",
-                    "default": "http://localhost:8080",
-                    "description": "URL to debug GWT."
-                },
-                "gwtHelper.debugBrowser": {
-                    "type": "string",
-                    "enum": [
-                        "chrome",
-                        "firefox"
-                    ],
-                    "default": "chrome",
-                    "description": "Browser used for debugging"
-                },
-                "gwtHelper.telemetry.enabled": {
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enables sending of anonymous telemetry data to help improve the extension"
-                }
-            }
-        },
-        "debuggers": [
-            {
-                "type": "gwt",
-                "label": "GWT Debugger",
-                "languages": [
-                    "javascript"
-                ]
-            }
+    "grammars": [
+      {
+        "language": "java",
+        "scopeName": "java.gwt.jsni.injection",
+        "path": "./syntaxes/jsni.injection.json",
+        "injectTo": [
+          "source.java"
         ]
+      }
+    ],
+    "snippets": [
+      {
+        "language": "java",
+        "path": "./snippets/jsni-snippets.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "gwt.refreshProjects",
+        "title": "GWT: Refresh Projects"
+      },
+      {
+        "command": "gwt.runCompile",
+        "title": "GWT: Run Compile"
+      },
+      {
+        "command": "gwt.stopCompile",
+        "title": "GWT: Stop Compile"
+      },
+      {
+        "command": "gwt.runDevMode",
+        "title": "GWT: Init DevMode"
+      },
+      {
+        "command": "gwt.stopDevMode",
+        "title": "GWT: Init DevMode"
+      },
+      {
+        "command": "gwt.runCodeServer",
+        "title": "GWT: Init CodeServer"
+      },
+      {
+        "command": "gwt.stopCodeServer",
+        "title": "GWT: Stop CodeServer"
+      },
+      {
+        "command": "gwt.startJetty",
+        "title": "GWT: Init Jetty"
+      },
+      {
+        "command": "gwt.stopJetty",
+        "title": "GWT: Stop Jetty"
+      },
+      {
+        "command": "gwt.stopAll",
+        "title": "GWT: Stop All"
+      },
+      {
+        "command": "gwt.openDebug",
+        "title": "GWT: Open Debug"
+      },
+      {
+        "command": "gwt.showLogs",
+        "title": "GWT: Show Logs"
+      },
+      {
+        "command": "gwt.openSettings",
+        "title": "GWT: Abrir Configurações"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "GWT Helper Settings",
+      "properties": {
+        "gwtHelper.javaPath": {
+          "type": "string",
+          "default": "java",
+          "description": "Path to Java. Ex: C:/Program Files/Java/jdk-1.8 or /usr/bin/java"
+        },
+        "gwtHelper.mavenCommand": {
+          "type": "string",
+          "default": "",
+          "description": "Path/exec to Maven. If empty, use 'mvn'"
+        },
+        "gwtHelper.devModeGoals": {
+          "type": "string",
+          "default": "gwt:devmode",
+          "description": "Maven Targets for Running DevMode"
+        },
+        "gwtHelper.codeServerGoals": {
+          "type": "string",
+          "default": "gwt:codeserver",
+          "description": "Maven targets for running CodeServer, as an example gwt:codeserver -pl *-client -am"
+        },
+        "gwtHelper.jettyGoals": {
+          "type": "string",
+          "default": "jetty:run",
+          "description": "Maven targets for running Jetty as example jetty:run -Pdev or jetty:run -pl *-server -am -Denv=dev"
+        },
+        "gwtHelper.compileGoals": {
+          "type": "string",
+          "default": "gwt:compile",
+          "description": "Maven goals to compile the project, replace with clean package to compile and package."
+        },
+        "gwtHelper.debugUrl": {
+          "type": "string",
+          "default": "http://localhost:8080",
+          "description": "URL to debug GWT."
+        },
+        "gwtHelper.debugBrowser": {
+          "type": "string",
+          "enum": [
+            "chrome",
+            "firefox"
+          ],
+          "default": "chrome",
+          "description": "Browser used for debugging"
+        },
+        "gwtHelper.telemetry.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enables sending of anonymous telemetry data to help improve the extension"
+        }
+      }
     },
-    "scripts": {
-        "vscode:prepublish": "npm run package",
-        "webpack": "webpack --mode development",
-        "webpack-dev": "webpack --mode development --watch",
-        "package": "webpack --mode production",
-        "compile": "tsc -p .",
-        "lint": "eslint src --ext ts",
-        "watch": "tsc -watch -p ."
-    },
-    "devDependencies": {
-        "@types/node": "^14.0.0",
-        "@types/vscode": "^1.70.0",
-        "ts-loader": "^9.5.2",
-        "typescript": "^4.0.0",
-        "webpack": "^5.98.0",
-        "webpack-cli": "^6.0.1"
-    },
-    "dependencies": {
-        "@vscode/extension-telemetry": "^0.9.8",
-        "find-process": "^1.4.10",
-        "gwt-helper": "file:"
-    },
-    "changelog": {
-        "0.3.6": "Store improvements to better handle history and open processes, and improvements to the UI and Initial implementation of statistics",
-        "0.3.3": "Updated README.md and improvements to java error logging and detection",
-        "0.3.2": "Added support for automatic port detection and enhanced UI with status indicators",
-        "0.3.1": "Fixed process management on Windows and improved project detection",
-        "0.3.0": "Added Jetty integration and enhanced debugger configuration",
-        "0.2.0": "Correction of the debugger (workaround) to deal with projects inside and outside of Worskpace",
-        "0.1.0": "Initial release of GWT Helper Extension"
-    }
+    "debuggers": [
+      {
+        "type": "gwt",
+        "label": "GWT Debugger",
+        "languages": [
+          "javascript"
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "webpack": "webpack --mode development",
+    "webpack-dev": "webpack --mode development --watch",
+    "package": "webpack --mode production",
+    "compile": "tsc -p .",
+    "lint": "eslint src --ext ts",
+    "watch": "tsc -watch -p ."
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.0",
+    "@types/vscode": "^1.70.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^4.0.0",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "@vscode/extension-telemetry": "^0.9.8",
+    "find-process": "^1.4.10",
+    "gwt-helper": "file:"
+  },
+  "changelog": {
+    "0.3.6": "Store improvements to better handle history and open processes, and improvements to the UI and Initial implementation of statistics",
+    "0.3.3": "Updated README.md and improvements to java error logging and detection",
+    "0.3.2": "Added support for automatic port detection and enhanced UI with status indicators",
+    "0.3.1": "Fixed process management on Windows and improved project detection",
+    "0.3.0": "Added Jetty integration and enhanced debugger configuration",
+    "0.2.0": "Correction of the debugger (workaround) to deal with projects inside and outside of Worskpace",
+    "0.1.0": "Initial release of GWT Helper Extension"
+  }
 }

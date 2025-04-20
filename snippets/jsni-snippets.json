@@ -1,0 +1,26 @@
+{
+    "JSNI Block": {
+      "prefix": "jsni", 
+      "body": [
+        "private native void ${1:methodName}(${2:args}) /*-{", 
+        "\t$0", 
+        "}-*/;"
+      ],
+      "description": "Cria um bloco de método JSNI nativo"
+    },
+    "JSNI Field Access": {
+      "prefix": "jsniField",
+      "body": [
+        "this.@${1:com.example.MyClass}::${2:fieldName}"
+      ],
+      "description": "Acessa um campo Java a partir do JSNI"
+    },
+    "JSNI Method Call": {
+      "prefix": "jsniCall",
+      "body": [
+        "this.@${1:com.example.MyClass}::${2:methodName}(${3:args})(${4:params})"
+      ],
+      "description": "Chama um método Java a partir do JSNI"
+    }
+  }
+  

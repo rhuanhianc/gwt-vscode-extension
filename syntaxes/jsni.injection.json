@@ -1,0 +1,17 @@
+{
+    "scopeName": "java.gwt.jsni.injection",
+    "injectionSelector": "L:comment.block.java",
+    "patterns": [
+      {
+        "contentName": "meta.embedded.block.javascript",
+        "begin": "/\\*-\\{",
+        "end": "\\}-\\*/",  
+        "patterns": [
+          {
+            "include": "source.js"
+          }
+        ]
+      }
+    ]
+  }
+  
